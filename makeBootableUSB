@@ -31,6 +31,15 @@ if [ "$USB_SEL" == "" ]
  exit 1
 fi
 
+#check if ISO path is correct
+ISO_PATH=$(ls $2 2>/dev/null)
+if [ "$ISO_PATH" != "$2" ]
+ then
+ printf "%b" "\n${RED}The ISO Path supplied is invalid.\n${NC}" >&2
+ exit 1
+fi
+ 
+
 printf "%b" "\n${bold}PLEASE MAKE SURE YOU HAVE SELECTED THE CORRECT USB DEVICE:${normal} \n"
 printf "%b" "$USB_SEL\n"
 printf "%b" "${RED}${bold}!WARNING! '$1'${normal}${RED} will be EREASED and FORMATTED \n"
