@@ -2,7 +2,7 @@
 #	Author: Siddhant Rath
 #	Mail : sid@tamu.edu
 #	Date : APR 4 2016
-#	Version 1.0
+#	Version 1.1
 #	GIT : https://github.com/Siddhant-R/LinuxTools.git
 
 #local variables
@@ -49,8 +49,6 @@ printf "%b" "${RED}${bold}!WARNING! '$1'${normal}${RED} will be EREASED and FORM
 printf "%b" "${NC}${bold}Do you want to continue? (yes/no):${normal} "
 
 read makeBootableUSB_choice
-
-printf "%b" "$makeBootableUSB_choice"
 
 if [ "$makeBootableUSB_choice" != "yes" ]; then
 printf "%b" "\nExiting .... \n"
