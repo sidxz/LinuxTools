@@ -9,9 +9,10 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 BLUE='\033[1;34m'
-
+BLOCK_BLUE='\e[44m'
+BLOCK_NORMAL='\e[49m'
 #Header
-
+printf "%b" "\n${BLOCK_BLUE}                    --- MAKE BOOTABLE USB ---                  ${BLOCK_NORMAL}\n"
 
 #Boot option
 if (($#<2))
@@ -21,9 +22,17 @@ printf "%b" "Example Usage : makeBootableUSB sdb bootable.iso \n" >&2
 exit 1
 fi
 
-printf "%b" "\n${bold}PLEASE MAKE SURE YOU HAVE SELECTED THE CORRECT USB DEVICE:${normal} \n"
-lsblk | grep -w "$1" ; 
+USB_SEL=$(lsblk | grep -w "$1")
+#check if usb device exists
+if [ "$USB_SEL" == "" ]
+ then
+ printf "%b" "\n${RED}The selected USB Device does not exist.\n${NC}" >&2
+ printf "%b" "Use fdisk -l (with root/sudo) to get the name of USB Device\n" >&2
+ exit 1
+fi
 
+printf "%b" "\n${bold}PLEASE MAKE SURE YOU HAVE SELECTED THE CORRECT USB DEVICE:${normal} \n"
+printf "%b" "$USB_SEL\n"
 printf "%b" "${RED}${bold}!WARNING! '$1'${normal}${RED} will be EREASED and FORMATTED \n"
 printf "%b" "${NC}${bold}Do you want to continue? (yes/no):${normal} "
 
