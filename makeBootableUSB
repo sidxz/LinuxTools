@@ -1,0 +1,70 @@
+#	This script makes a bootable USB Drive from an ISO Image
+#	Author: Siddhant Rath
+#	Date : APR 4 2016
+
+#local variables
+bold=$(tput bold)
+normal=$(tput sgr0)
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+BLUE='\033[1;34m'
+
+#Header
+
+
+#Boot option
+if (($#<2))
+then
+printf "%b" "Error. Please pass path to usb stick as an argument.\n" >&2
+printf "%b" "Example Usage : makeBootableUSB sdb bootable.iso \n" >&2
+exit 1
+fi
+
+printf "%b" "\n${bold}PLEASE MAKE SURE YOU HAVE SELECTED THE CORRECT USB DEVICE:${normal} \n"
+lsblk | grep -w "$1" ; 
+
+printf "%b" "${RED}${bold}!WARNING! '$1'${normal}${RED} will be EREASED and FORMATTED \n"
+printf "%b" "${NC}${bold}Do you want to continue? (yes/no):${normal} "
+
+read makeBootableUSB_choice
+
+printf "%b" "$makeBootableUSB_choice"
+
+if [ "$makeBootableUSB_choice" != "yes" ]; then
+printf "%b" "\nExiting .... \nPlease Restart with proper drive\n"
+exit 2
+fi
+
+#Start Preparing device
+
+#Unmount disk
+printf "%b" "\n-> Unmounting $1 ...." 
+sudo umount /dev/$1 >/dev/null 2>&1
+if(($?!=0))
+ then
+  printf "%b" " ${GREEN}[OK]${NC} \nDevice was already unmounted\n" >&2
+else
+ printf "%b" " ${GREEN}[OK]${NC} \n"
+fi
+
+#Format Disk
+printf "%b" "-> Formatting $1 ...."
+sudo mkdosfs -n 'BootableUSB' -I /dev/$1 -F 32 >/dev/null 2>&1
+if(($?!=0))
+ then
+ printf "%b" " ${RED}[FAIL]${NC} \nUnable to format $1\n" >&2
+ exit 1
+fi
+printf "%b" " ${GREEN}[OK]${NC} \n"
+
+#create bootable usb
+printf "%b" "-> Creating Bootable USB, This will take a while !...."
+sudo dd if=$2 of=/dev/$1 oflag=direct bs=512k >/dev/null 2>&1
+if(($?!=0))
+ then
+ printf "%b" " ${RED}[FAIL]${NC} \nFailed creating Bootable USB! \n" >2&
+ exit 1
+fi
+printf "%b" "${GREEN} [SUCCESS]${NC} \n"
+exit 0
