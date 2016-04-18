@@ -1,4 +1,4 @@
-#	This script makes a bootable USB Drive from an ISO Image
+#	This script boots up an ubuntu 64 instance 
 #	Author: Siddhant Rath
 #	Mail : sid@tamu.edu
 #	Date : APR 14 2016
