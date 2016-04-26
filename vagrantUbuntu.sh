@@ -32,10 +32,9 @@ mkdir $1
 cd $1
 
 ### Add Ubuntu 64 image
-vagrant box add $1 https://github.com/kraksoft/vagrant-box-ubuntu/releases/download/15.04/ubuntu-15.04-amd64.box
-
+vagrant box add ubuntu-15.04-amd64 https://github.com/kraksoft/vagrant-box-ubuntu/releases/download/15.04/ubuntu-15.04-amd64.box --provider virtualbox
 #Initialize Vagrant
-vagrant init $1
+vagrant init ubuntu-15.04-amd64
 
 ### Install vb-guest (Some times it fails to mount, this solves it)
 vagrant plugin install vagrant-vbguest
