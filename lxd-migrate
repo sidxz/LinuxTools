@@ -1,0 +1,164 @@
+#!/bin/bash
+if [ $# -lt 3 ]
+then
+  echo "Usage: $0: <--send / --recieve> <container name> <hostname>"
+  echo "Example : lxd-migrate --send big-brother hoss"
+  exit 1
+fi
+
+action="$1"
+containerName="$2"
+host="$3"
+
+if [[ "$action" != "--send" && "$action" != "--recieve" ]]
+then
+  echo "! Invalid Action - Usage: $0: <--send / --recieve> <container name> <hostname>"
+  echo "Example : lxd-migrate -send big-brother hoss"
+  exit 1
+fi
+
+######################
+### SEND
+
+echo "[INFO] Preparing $containerName to send to $host"
+if [[ "$action" == "--send" ]]
+then
+#Check if container exists
+cmdString=$(lxc list | grep $containerName | awk '{print $2}')
+
+  if [[ "$cmdString" != "$containerName" ]]
+    then
+    echo "[FAIL] $containerName Does NOT exist"
+    exit 1
+  fi
+echo "[OK] Container Found"
+
+#Check if container is running
+cmdString=$(lxc list | grep $containerName | awk '{print $4}')
+  if [[ "$cmdString" == "RUNNING" ]]
+  then
+    echo "[FAIL] Container needs to be stopped before migrating"
+    exit 2
+  fi
+#Start copying internal files
+echo "[OK] Container is in stopped condition"
+echo "[INFO] Copying Files.."
+
+base="/var/lib/lxd/containers/$containerName/rootfs"
+
+cp $base/etc/hostname $base/etc/hostname.bak
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Unable to copy hostname"
+  exit 3
+fi
+echo "[OK] Copied hostname"
+
+cp $base/etc/hosts $base/etc/hosts.bak
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Unable to copy hosts"
+  exit 3
+fi
+echo "[OK] Copied hosts"
+
+#Start Migrating
+echo "Migrating ...."
+lxc copy $containerName $host:$containerName
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Failed executing lxd copy"
+  exit 4
+fi
+echo "[SUCCESS] $containerName has been sent to $host"
+
+#Handle profiles
+profiles=$(lxc info $containerName | grep Profiles | sed 's/default//g' | sed 's/-no-autoboot//g'| sed 's/Profiles://g' | tr -d '[:space:]')
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Unable to find profiles"
+  echo "[INFO] ! IMPORTANT ! Manually remove from default and append to default-no-autoboot"
+  exit 5
+fi
+echo "[INFO] Found Additional Profiles $profiles"
+#Move to default-no-autoboot
+lxc profile apply $containerName default-no-autoboot$profiles
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Unable to find profiles"
+  echo "[INFO] ! IMPORTANT ! Manually remove from default and append to default-no-autoboot"
+  exit 5
+fi
+echo "[SUCCESS] Profiles Applied"
+
+echo "[SUCCESS] Sending is complete. Run the following in $host to recieve the container"
+echo "lxd-migrate  --recieve $containerName $host"
+
+fi #end of --send
+
+##############################################
+### Recieve
+
+if [[ "$action" == "--recieve" ]]
+then
+#Check if container exist
+echo "[INFO] Attempting to recieve $containerName"
+
+cmdString=$(lxc list | grep $containerName | awk '{print $2}')
+
+  if [[ "$cmdString" != "$containerName" ]]
+    then
+    echo "[FAIL] $containerName Does NOT exist"
+    exit 1
+  fi
+echo "[OK] Container Found"
+
+#Check if container is running
+cmdString=$(lxc list | grep $containerName | awk '{print $4}')
+  if [[ "$cmdString" == "RUNNING" ]]
+  then
+    echo "[FAIL] Container needs to be stopped before migrating"
+    exit 2
+  fi
+#Restart container so that lxc changes host
+lxc start $containerName && lxc stop $containerName
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Restarting container failed"
+  exit 6
+fi
+
+#Start copying internal files
+echo "[OK] Container is in stopped condition"
+echo "[OK] Copying Files.."
+
+base="/var/lib/lxd/containers/$containerName/rootfs"
+
+mv $base/etc/hostname.bak $base/etc/hostname
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Unable to copy hostname"
+  exit 3
+fi
+echo "[OK] Copied hostname"
+
+mv $base/etc/hosts.bak $base/etc/hosts
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Unable to copy hosts"
+  exit 3
+fi
+echo "[OK] Copied hosts"
+echo "[SUCCESS]"
+
+echo "[INFO] Booting up container..."
+lxc start $containerName
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Unable to start container"
+  exit 4
+fi
+echo "[SUCCESS] Migration succeeded. To login use clogin $containerName"
+exit 0
+fi
+
