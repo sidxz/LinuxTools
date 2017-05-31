@@ -1,0 +1,23 @@
+if [ $# -lt 1 ]
+then
+  echo "Usage: $0: <container name>"
+  echo "Example : openlab-create my-container"
+  exit 1
+fi
+
+containerName="$1"
+echo ""
+echo ""
+echo "----------- OPEN LAB FRAMEWORK ---------------"
+echo "@Author: Siddhant Rath"
+sleep 2 2>&1 >/dev/null
+
+lxc launch openlab-ubuntu $containerName
+
+if [[ $? != 0 ]]
+  then
+  echo "[FAIL] Failed Creating LXD Container"
+  exit 3
+fi
+echo "[OK] LXD Machine Container Created Successfully"
+echo "Script Source: http://www.github.com/sidxz"
