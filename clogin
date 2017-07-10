@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]
+then
+  echo "Usage: $0 <container short name> [command to run - defaults to bash]"
+fi
+
+cmd="bash"
+if [ ! -z $2 ]
+then
+  cmd="$2"
+fi
+
+lxc exec $1 -- $cmd
+
